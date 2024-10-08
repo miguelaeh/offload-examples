@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import JS Example</title>
+</head>
+
+<body>
+    <h1>Offload standalone demo</h1>
+
+    <!-- Add Offload widget container. You can change the id as far as it matches the id passed to the Widget constructor -->
+    <div id="offload-widget-container"></div>
+    <!-- Load the Offload script -->
+    <script src="https://unpkg.com/offload-ai"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Configure offload
+            window.Offload.config({
+                appUuid: "b370195d-a8ad-47bd-9d25-2818a6905896",
+                promptUuids: {
+                    // Here we just map prompt uuids to keys that are easier to reference in SDK calls
+                    user_text: "4e151113-22ae-41e8-abf1-c8b358163cc9"
+                }
+            });
+            // Initialize the widget
+            window.Offload.Widget("offload-widget-container");
+        });
+    </script>
+</body>
+</html>
