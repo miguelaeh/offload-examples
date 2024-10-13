@@ -36,8 +36,8 @@ export default function Home() {
 
   const onPrompt = async () => {
     setLoading(true);
-    
-    const updatedMessages = [ ...chatMessages, { role: "user", content: intent } ];
+
+    const updatedMessages: ChatMessage[] = [ ...chatMessages, { role: "user", content: intent } ];
     /**
      * This block uses data streaming
      */
@@ -66,7 +66,7 @@ export default function Home() {
     } catch (e: any) {
       console.log(e)
     }
-    
+
     /**
     * This block uses non-data streaming and forces a JSON schema
     */
@@ -99,12 +99,12 @@ export default function Home() {
     } catch(e: any) {
         console.error(e);
     }*/
-    
+
     setLoading(false);
   };
 
   // Handle send by pressing enter
-  const handleEnter = (event) => {
+  const handleEnter = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === 'Enter') {
           event.preventDefault();
           onPrompt();
@@ -116,7 +116,7 @@ export default function Home() {
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
 
         {/* Create a div for the widget */}
-        <div id="offload-widget-container"></div>	
+        <div id="offload-widget-container"></div>
 
         <div className="max-w-3xl max-h-96 space-y-3 overflow-y-auto px-3">
           {chatMessages.map((m, k) =>
@@ -142,7 +142,7 @@ export default function Home() {
               <path d="M35.6521 24.4656L34.3115 23.7772C32.6901 22.9529 31.3948 21.6576 30.5705 20.0362L29.8821 18.6957C29.2753 17.5 28.0615 16.7573 26.7209 16.7573C25.3803 16.7573 24.1666 17.5 23.5597 18.6957L22.8713 20.0362C22.047 21.6576 20.7517 22.9529 19.1303 23.7772L17.7897 24.4656C16.5941 25.0725 15.8513 26.2862 15.8513 27.6268C15.8513 28.9674 16.5941 30.1812 17.7897 30.788L19.1303 31.4765C20.7517 32.3007 22.047 33.596 22.8713 35.2174L23.5597 36.558C24.1666 37.7536 25.3803 38.4964 26.7209 38.4964C28.0615 38.4964 29.2753 37.7536 29.8821 36.558L30.5705 35.2174C31.3948 33.596 32.6901 32.3007 34.3115 31.4765L35.6521 30.788C36.8477 30.1812 37.5905 28.9674 37.5905 27.6268C37.5905 26.2862 36.8477 25.0725 35.6521 24.4656ZM34.4202 28.3696L33.0796 29.058C30.9419 30.1449 29.239 31.8478 28.1521 33.9855L27.4637 35.3261C27.2553 35.7337 26.8749 35.779 26.7209 35.779C26.5669 35.779 26.1865 35.7337 25.9781 35.3261L25.2897 33.9855C24.2028 31.8478 22.4999 30.1449 20.3622 29.058L19.0216 28.3696C18.614 28.1612 18.5687 27.7808 18.5687 27.6268C18.5687 27.4728 18.614 27.0924 19.0216 26.8841L20.3622 26.1957C22.4999 25.1087 24.2028 23.4058 25.2897 21.2681L25.9781 19.9275C26.1865 19.5199 26.5669 19.4746 26.7209 19.4746C26.8749 19.4746 27.2553 19.5199 27.4637 19.9275L28.1521 21.2681C29.239 23.4058 30.9419 25.1087 33.0796 26.1957L34.4202 26.8841C34.8278 27.0924 34.8731 27.4728 34.8731 27.6268C34.8731 27.7808 34.8278 28.1612 34.4202 28.3696Z" fill="black" />
             </svg>
           </div>
-          <textarea onKeyPress={handleEnter} className="grow focus:outline-none" rows={1} onChange={(e) => setIntent(e.target.value)} value={intent} />
+          <textarea onKeyDown={handleEnter} className="grow focus:outline-none" rows={1} onChange={(e) => setIntent(e.target.value)} value={intent} />
           <button onClick={onPrompt}>
             <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="25" cy="25" r="25" fill="#D9D9D9" />
