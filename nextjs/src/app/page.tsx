@@ -1,7 +1,7 @@
 "use client"; // The Offload Widget cannot run in the server
 
 import Offload from 'offload-ai';
-import { ChatMessage, OffloadRequest, OffloadStreamResponse } from 'offload-ai/dist/sdk/types';
+import { ChatMessage, OffloadObjectResponse, OffloadRequest, OffloadStreamResponse } from 'offload-ai/dist/sdk/types';
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
@@ -37,7 +37,7 @@ export default function Home() {
   const onPrompt = async () => {
     setLoading(true);
 
-    const updatedMessages: ChatMessage[] = [ ...chatMessages, { role: "user", content: intent } ];
+    const updatedMessages: ChatMessage[] = [...chatMessages, { role: "user", content: intent }];
     /**
      * This block uses data streaming
      */
@@ -72,32 +72,36 @@ export default function Home() {
     */
 
     /*try {
-        const response = await (window as any).Offload.offload({
-            promptKey: "user_text",
-            outputKind: 'Text',
-            variables: {
-                message: intent, // The prompt we configured in the dashboard contains a {{messsage}} variable. This will replace the variable with the user message
+      const response = await Offload.offload({
+        promptKey: "user_text",
+        variables: {
+          message: intent, // The prompt we configured in the dashboard contains a {{messsage}} variable. This will replace the variable with the user message
+        },
+        stream: false,
+        schema: {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
             },
-            stream: false,
-            schema: {
-                "$schema": "http://json-schema.org/draft-07/schema#",
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "age": {
-                    "type": "integer"
-                  }
-                }
-              }
-        });
-        console.log(response.object); // Note we use response.object here instead of reponse.text since we are forcing the schema
-        setReply(JSON.stringify(response.object));
-        console.log(response.finishReason);
-        console.log(response.usage);
-    } catch(e: any) {
-        console.error(e);
+            "age": {
+              "type": "integer"
+            }
+          }
+        },
+        messages: updatedMessages,
+        temperature: 1,
+      });
+      const resObject = (response as OffloadObjectResponse).object; // Note we use response.object here instead of reponse.text since we are forcing the schema
+      setReply(JSON.stringify(resObject));
+      console.log(response.finishReason);
+      console.log(response.usage);
+      setChatMessages([...updatedMessages, { role: "assistant", content: JSON.stringify(resObject) }]);
+      setReply(""); // Reset reply
+      setIntent(""); // clean the text area
+    } catch (e: any) {
+      console.error(e);
     }*/
 
     setLoading(false);
@@ -105,10 +109,10 @@ export default function Home() {
 
   // Handle send by pressing enter
   const handleEnter = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (event.key === 'Enter') {
-          event.preventDefault();
-          onPrompt();
-      }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      onPrompt();
+    }
   };
 
   return (
