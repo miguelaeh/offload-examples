@@ -1,16 +1,17 @@
 "use client"; // The Offload Widget cannot run in the server
 
 import Offload from 'offload-ai';
-import { OffloadStreamResponse } from 'offload-ai/dist/sdk/types';
+import { ChatMessage, OffloadRequest, OffloadStreamResponse } from 'offload-ai/dist/sdk/types';
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 // configure Offload - you should update the IDs by the ones in your dashboard
 Offload.config({
-    appUuid: "b370195d-a8ad-47bd-9d25-2818a6905896",
-    promptUuids: {
-      // Here we just map prompt uuids to keys that are easier to reference in SDK calls
-      user_text: "4e151113-22ae-41e8-abf1-c8b358163cc9"
-    }
+  appUuid: "b370195d-a8ad-47bd-9d25-2818a6905896",
+  promptUuids: {
+    // Here we just map prompt uuids from the dashboard to keys, which are easier to be referenced in your code
+    user_text: "4e151113-22ae-41e8-abf1-c8b358163cc9", // This prompt in the dashboard contains just the following, which is a variable: {{message}}
+  }
 });
 
 function LoadingIcon({ size = 20 }) {
@@ -31,33 +32,41 @@ export default function Home() {
   const [intent, setIntent] = useState<string>("");
   const [reply, setReply] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   const onPrompt = async () => {
     setLoading(true);
-
+    
+    const updatedMessages = [ ...chatMessages, { role: "user", content: intent } ];
     /**
      * This block uses data streaming
      */
     try {
-        const responseStream = await Offload.offload({
-            promptKey: "user_text",
-            stream: true,
-            variables: { message: intent }, // The prompt we configured in the dashboard contains a {{messsage}} variable. This will replace the variable with the user message
-        });
+      const responseStream = await Offload.offload({
+        promptKey: "user_text",
+        stream: true,
+        variables: { message: intent }, // The prompt we configured in the dashboard contains a {{messsage}} variable. This will replace the variable with the user message
+        maxTokens: 256, // Stop generation after 256 tokens
+        temperature: 0, // How creative to be
+        messages: updatedMessages,
+      });
 
-        let acum = "";
-        for await (const textChunk of (responseStream as OffloadStreamResponse).textStream as any) {
-            acum += textChunk;
-            setReply(acum);
-        }
-        const usage = await responseStream.usage;
-        console.log(usage);
-        const finishReason = await responseStream.finishReason;
-        console.log(finishReason);
-    } catch(e: any) {
-        console.log(e)
+      let acum = "";
+      for await (const textChunk of (responseStream as OffloadStreamResponse).textStream as any) {
+        acum += textChunk;
+        setReply(acum);
+      }
+      const usage = await responseStream.usage;
+      console.log(usage);
+      const finishReason = await responseStream.finishReason;
+      console.log(finishReason);
+      setChatMessages([...updatedMessages, { role: "assistant", content: acum }]);
+      setReply(""); // Reset reply
+      setIntent(""); // clean the text area
+    } catch (e: any) {
+      console.log(e)
     }
-
+    
     /**
     * This block uses non-data streaming and forces a JSON schema
     */
@@ -90,8 +99,16 @@ export default function Home() {
     } catch(e: any) {
         console.error(e);
     }*/
-
+    
     setLoading(false);
+  };
+
+  // Handle send by pressing enter
+  const handleEnter = (event) => {
+      if (event.key === 'Enter') {
+          event.preventDefault();
+          onPrompt();
+      }
   };
 
   return (
@@ -99,11 +116,22 @@ export default function Home() {
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
 
         {/* Create a div for the widget */}
-        <div id="offload-widget-container"></div>
+        <div id="offload-widget-container"></div>	
 
-        <div className="w-full">
-          <p className="flex gap-3">LLM response: {loading && <LoadingIcon />}</p>
-          <p className="bg-gray-100 border border-gray-200 rounded-md min-h-24 w-full break-words">{reply}</p>
+        <div className="max-w-3xl max-h-96 space-y-3 overflow-y-auto px-3">
+          {chatMessages.map((m, k) =>
+            <div key={k} className={`flex w-full ${m.role === "assistant" ? "justify-start" : "justify-end"}`}>
+              <p className={`p-2 bg-gray-50 border border-gray-200 rounded-md w-2/3 break-words`}>{m.content?.toString()}</p>
+            </div>
+          )}
+          { /* While loading, show the generated text here so the user can see the stream during generation */
+            loading && <div className='flex gap-4'>
+              <div className='justify-left'>
+                <p className="bg-gray-100 border border-gray-200 rounded-md min-h-24 w-full break-words">{reply}</p>
+              </div>
+              <p className="flex gap-3">{loading && <LoadingIcon />}</p>
+            </div>
+          }
         </div>
 
         <div className="flex rounded-lg border shadow-lg w-full px-4 py-2 items-center gap-6 bg-white">
@@ -114,13 +142,17 @@ export default function Home() {
               <path d="M35.6521 24.4656L34.3115 23.7772C32.6901 22.9529 31.3948 21.6576 30.5705 20.0362L29.8821 18.6957C29.2753 17.5 28.0615 16.7573 26.7209 16.7573C25.3803 16.7573 24.1666 17.5 23.5597 18.6957L22.8713 20.0362C22.047 21.6576 20.7517 22.9529 19.1303 23.7772L17.7897 24.4656C16.5941 25.0725 15.8513 26.2862 15.8513 27.6268C15.8513 28.9674 16.5941 30.1812 17.7897 30.788L19.1303 31.4765C20.7517 32.3007 22.047 33.596 22.8713 35.2174L23.5597 36.558C24.1666 37.7536 25.3803 38.4964 26.7209 38.4964C28.0615 38.4964 29.2753 37.7536 29.8821 36.558L30.5705 35.2174C31.3948 33.596 32.6901 32.3007 34.3115 31.4765L35.6521 30.788C36.8477 30.1812 37.5905 28.9674 37.5905 27.6268C37.5905 26.2862 36.8477 25.0725 35.6521 24.4656ZM34.4202 28.3696L33.0796 29.058C30.9419 30.1449 29.239 31.8478 28.1521 33.9855L27.4637 35.3261C27.2553 35.7337 26.8749 35.779 26.7209 35.779C26.5669 35.779 26.1865 35.7337 25.9781 35.3261L25.2897 33.9855C24.2028 31.8478 22.4999 30.1449 20.3622 29.058L19.0216 28.3696C18.614 28.1612 18.5687 27.7808 18.5687 27.6268C18.5687 27.4728 18.614 27.0924 19.0216 26.8841L20.3622 26.1957C22.4999 25.1087 24.2028 23.4058 25.2897 21.2681L25.9781 19.9275C26.1865 19.5199 26.5669 19.4746 26.7209 19.4746C26.8749 19.4746 27.2553 19.5199 27.4637 19.9275L28.1521 21.2681C29.239 23.4058 30.9419 25.1087 33.0796 26.1957L34.4202 26.8841C34.8278 27.0924 34.8731 27.4728 34.8731 27.6268C34.8731 27.7808 34.8278 28.1612 34.4202 28.3696Z" fill="black" />
             </svg>
           </div>
-          <textarea className="grow focus:outline-none" rows={1} onChange={(e) => setIntent(e.target.value)} />
+          <textarea onKeyPress={handleEnter} className="grow focus:outline-none" rows={1} onChange={(e) => setIntent(e.target.value)} value={intent} />
           <button onClick={onPrompt}>
             <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="25" cy="25" r="25" fill="#D9D9D9" />
               <path d="M24.9998 34.3333V15.6667M24.9998 15.6667L15.6665 25M24.9998 15.6667L34.3332 25" stroke="#1E1E1E" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
+        </div>
+
+        <div className="flex w-full justify-center">
+          <Link className="hover:underline bg-white shadow-md px-2 py-1 border border-gray-200 text-gray-500 font-semibold rounded-md" target="_blank" href="https://github.com/miguelaeh/offload-examples/tree/main/nextjs">Click here to see code on GitHub</Link>
         </div>
       </main>
     </div>
