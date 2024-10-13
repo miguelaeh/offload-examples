@@ -122,7 +122,7 @@ export default function Home() {
         {/* Create a div for the widget */}
         <div id="offload-widget-container"></div>
 
-        <div className="max-w-3xl max-h-96 space-y-3 overflow-y-auto px-3">
+        <div className="min-w-xl max-w-4xl max-h-96 space-y-3 overflow-y-auto px-3">
           {chatMessages.map((m, k) =>
             <div key={k} className={`flex w-full ${m.role === "assistant" ? "justify-start" : "justify-end"}`}>
               <p className={`p-2 bg-gray-50 border border-gray-200 rounded-md w-2/3 break-words`}>{m.content?.toString()}</p>
