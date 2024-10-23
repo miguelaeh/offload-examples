@@ -24,15 +24,17 @@ function LoadingIcon({ size = 20 }) {
 }
 
 export default function Home() {
-  useEffect(() => {
-    // Load the widget after the render
-    Offload.Widget('offload-widget-container'); // You can change the container id as far as it matches the id provided to the div container
-  }, []);
-
   const [intent, setIntent] = useState<string>("");
   const [reply, setReply] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    // Load the widget after the render
+    Offload.Widget('offload-widget-container'); // You can change the container id as far as it matches the id provided to the div container
+    Offload.onError(async (error) => setError(error.message));
+  }, []);
 
   const onPrompt = async () => {
     setLoading(true);
@@ -154,6 +156,8 @@ export default function Home() {
             </svg>
           </button>
         </div>
+
+        { error && <p className='text-red-500 bg-red-50 px-3 py-1 rounded-md'>{error}</p>}
 
         <div className="flex w-full justify-center">
           <Link className="hover:underline bg-white shadow-md px-2 py-1 border border-gray-200 text-gray-500 font-semibold rounded-md" target="_blank" href="https://github.com/miguelaeh/offload-examples/tree/main/nextjs">Click here to see code on GitHub</Link>
